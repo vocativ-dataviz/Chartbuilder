@@ -498,6 +498,7 @@ var Gneiss = {
 			else {
 				g.yAxis[i].axis//.ticks(g.yAxis[0].ticks) // I'm not using built in ticks because it is too opinionated
 					.tickValues(g.yAxis[i].tickValues?g.yAxis[i].tickValues:this.helper.exactTicks(g.yAxis[i].scale.domain(),g.yAxis[0].ticks))
+					.tickSize(g.width - g.padding.left - g.padding.right)
 					
 				axisGroup = g.chart.selectAll(i==0?"#rightAxis":"#leftAxis")
 					.call(g.yAxis[i].axis)
@@ -1399,7 +1400,7 @@ var Gneiss = {
 			numticks -= 1;
 			var ticks = [];
 			var delta = domain[1] - domain[0];
-			
+
 			for (var i=0; i < numticks; i++) {
 				ticks.push(domain[0] + (delta/numticks)*i);
 			};

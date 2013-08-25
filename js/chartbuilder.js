@@ -472,7 +472,7 @@ ChartBuilder = {
 				)
 		}
 		else {
-			$("#chartContainer").css("height",338)
+			$("#chartContainer").css("height","")
 		}
 	},
 	makeLegendAdjustable: function() {
@@ -880,6 +880,13 @@ ChartBuilder.start = function(config) {
   		ChartBuilder.makeLegendAdjustable()
   		
   		chart.g.titleLine.text(chart.g.title)
+  	})
+
+  	$("#chart_size").change(function() {
+  		$("#chartContainer").attr("class",$(this).val())
+
+  		chart.resize()
+  		chart.redraw()
   	})
   	
   })

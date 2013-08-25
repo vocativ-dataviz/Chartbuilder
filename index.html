@@ -29,7 +29,7 @@
 			<div id="leftColumn" class="column">
 			  <div class="cbInner">
   				<div id="staticContainer">
-  					<div id="chartContainer"></div>
+  					<div id="chartContainer" class="size_normal"></div>
   
   					<canvas id="canvas" width="1200px" height="676px"></canvas> 
   					<canvas id="favicanvas" width="16px" height="16px"></canvas> 
@@ -71,6 +71,14 @@
     						<div class="optionGroup"><label for="credit">Credit</label><input id="creditLine" type="text" name="credit" value="Made with Chartbuilder"></div>
     						<div class="optionGroup"><label for="source">Source</label><input id="sourceLine" type="text" name="source" value="Data: ">
     						<cite>Something like "Data: Bureau of Labor Statistics" or "Data compiled by Factset"</cite></div>
+                <div class="optionGroup">
+                  <label for="chart_size">Chart Size</label>
+                  <select id="chart_size">
+                    <option value="size_normal" >Normal</option>
+                    <option value="size_longandskinny">Long and Skinny</option>
+                    <option value="size_spot">Spot</option>
+                  </select>
+                </div>
     				</div>
     				<div class="optionBlock">
    							<h2>4. Right Axis Options</h2>
