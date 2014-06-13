@@ -196,17 +196,19 @@
 		
 		<script type="text/javascript">
 
+
+    $(document).ready(function() {
+                ChartBuilder.start();
+            });
 		//This loads the webfonts and starts Chartbuilder once they're present
-		WebFont.load({
-			custom: {
-				families: ["Cutive"]
-			},
-		    active: function(name) {
-		        $(document).ready(function() {
-		            ChartBuilder.start();
-		        });
-		    }
-		});
+		// WebFont.load({
+		// 	custom: {
+		// 		families: ["Cutive"]
+		// 	},
+		//     active: function(name) {
+		        
+		//     }
+		// });
 
 		</script>
 	</body>

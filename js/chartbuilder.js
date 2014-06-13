@@ -1072,6 +1072,12 @@ ChartBuilder.start = function(config) {
 		$("#downloadLinksDiv").toggleClass("hide");
 	});
 
+	$("#chart_size").change(function() {
+  		$("#chartContainer").attr("class",$(this).val())
+  		chart.resize()
+  		chart.redraw()
+  	})
+
 	//store the decimal and thousands separators
 	ChartBuilder.separators = ChartBuilder.determineLocaleNumberSeps();
 
