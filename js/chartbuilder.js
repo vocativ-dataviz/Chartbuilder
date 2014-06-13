@@ -1053,6 +1053,7 @@ ChartBuilder.start = function(config) {
 		var val = $(this).val();
 		chart.source(val);
 		chart.sourceElement().text(chart.source());
+		chart.redraw()
 	});
 	
 	$("#chart_title").keyup(function() {

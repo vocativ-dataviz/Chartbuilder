@@ -974,8 +974,12 @@ function Gneiss(config)
 			}
 			else {
 				curAxis.axis//.ticks(`)[0].ticks) // I'm not using built in ticks because it is too opinionated
-					.tickValues(curAxis.tickValues?curAxis.tickValues:Gneiss.helper.exactTicks(curAxis.scale.domain(),g.yAxis()[0].ticks));
-					
+					.tickValues(curAxis.tickValues?curAxis.tickValues:Gneiss.helper.exactTicks(curAxis.scale.domain(),g.yAxis()[0].ticks))
+					.scale(g.yAxis()[i].scale)
+					.orient(i == 0 ? "right" : "left" )
+					.tickSize(g.width() - g.padding().left - g.padding().right);
+
+
 				axisGroup = g.chartElement().selectAll(i == 0 ? "#rightAxis" : "#leftAxis")
 					.call(curAxis.axis);
 				
@@ -1313,8 +1317,6 @@ function Gneiss(config)
 					else if (hours > 1){
 						hourGap = 1;
 					}
-
-					console.log(hours, hourGap);
 
 
 					switch(g.xAxis().formatter) {
@@ -1977,8 +1979,37 @@ function Gneiss(config)
 	};
   
   this.updateMetaAndTitle = function Gneiss$updateMetaAndTitle() {
+  		/*
+			Position the source and title elements appropriately
+  		*/
+
 		var g = this;
+		
+		var creditBBox;
+
+		//the default values for the source element
+		var sourceElementX = g.width() - g.padding().right;;
+		var sourceElementDY = 0;
+		var sourceElementTA = "end"
+
+		//place the footer elements in the right place
 		g.footerElement().attr("transform","translate(0," + (g.height() - g.footerMargin()) + ")");
+
+		//test if the text elements are overlapping
+		creditBBox =  g.creditElement()[0][0].getBBox()
+
+		if(sourceElementX - g.sourceElement()[0][0].getBBox().width < creditBBox.width + creditBBox.x) {
+			//if they're overlapping stack the elements and align left
+			sourceElementDY = "1.2em";
+			sourceElementX = g.padding().left;
+			sourceElementTA = "start"
+		}
+
+		//update the source element with the propper values
+		g.sourceElement().attr("x", sourceElementX)
+						.attr("dy", sourceElementDY)
+						.attr("text-anchor", sourceElementTA);
+
 		return this;
 	};
   
