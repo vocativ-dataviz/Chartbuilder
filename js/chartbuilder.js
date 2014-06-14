@@ -627,6 +627,11 @@ ChartBuilder = {
 		else {
 			$("#chartContainer").removeAttr("height").css("height","");
 		}
+
+		//if there is a multiline footer increase the chart height to accomodate it
+		if(chart.footerElement()[0][0].getBBox().height > chart.creditElement()[0][0].getBBox().height){
+			$("#chartContainer").css("height", $("#chartContainer").height() + chart.footerElement()[0][0].getBBox().height);
+		}
 	},
 	makeLegendAdjustable: function() {
 		
@@ -1045,15 +1050,30 @@ ChartBuilder.start = function(config) {
 	
 	$("#creditLine").keyup(function() {
 		var val = $(this).val();
-		chart.credit(val);
-		chart.creditElement().text(chart.credit());
+		chart.credit(val)
+			.creditElement().text(chart.credit());
+
+		ChartBuilder.setChartArea();
+		chart.resize();
+		chart.redraw();
+
+		ChartBuilder.setChartArea();
+		chart.resize();
+		chart.redraw();
 	});
 		
 	$("#sourceLine").keyup(function() {
 		var val = $(this).val();
 		chart.source(val);
 		chart.sourceElement().text(chart.source());
-		chart.redraw()
+		
+		ChartBuilder.setChartArea();
+		chart.resize();
+		chart.redraw();
+
+		ChartBuilder.setChartArea();
+		chart.resize();
+		chart.redraw();
 	});
 	
 	$("#chart_title").keyup(function() {

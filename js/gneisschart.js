@@ -699,6 +699,8 @@ function Gneiss(config)
 			.attr("x", g.padding().left)
 			.attr("class", "metaText")
 			.text(g.credit()));
+
+		g.updateMetaAndTitle();
       
 		return this;
 	};
@@ -726,7 +728,7 @@ function Gneiss(config)
 			.attr("width",g.width()-g.padding().left-g.padding().right)
 			.attr("height",g.height()-g.padding().top-g.padding().bottom);
       
-		g.footerElement().attr("transform","translate(0," + (g.height() - g.footerMargin()) + ")");
+		g.updateMetaAndTitle();	
 		
 		return this;
 	};
@@ -849,6 +851,9 @@ function Gneiss(config)
 				padding_top += g.titleElement().text().length != 0 ? title_height + g.titleBottomMargin() : 0
 			} catch(e) {/* A race condition that doesn't matter was met, setPadding will be called again and everything will be okay*/}
 		}
+
+		//add the height of the source line if there is a sourceline and it's more than one line
+		//padding_bottom += g.sourceElement().text() != "" && g.sourceElement().attr("dy") != 0 ? g.sourceElement()[0][0].getBBox().height : 0;
 		
 		g.padding().top = padding_top;
 		g.padding().bottom = padding_bottom;
@@ -1993,7 +1998,6 @@ function Gneiss(config)
 		var sourceElementTA = "end"
 
 		//place the footer elements in the right place
-		g.footerElement().attr("transform","translate(0," + (g.height() - g.footerMargin()) + ")");
 
 		//test if the text elements are overlapping
 		creditBBox =  g.creditElement()[0][0].getBBox()
@@ -2009,6 +2013,8 @@ function Gneiss(config)
 		g.sourceElement().attr("x", sourceElementX)
 						.attr("dy", sourceElementDY)
 						.attr("text-anchor", sourceElementTA);
+
+		g.footerElement().attr("transform","translate(0," + (g.height() - g.footerElement()[0][0].getBBox().height + g.sourceElement()[0][0].getBBox().height - g.footerMargin()) + ")");
 
 		return this;
 	};
