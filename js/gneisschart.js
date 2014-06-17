@@ -28,10 +28,11 @@ Gneiss.defaultGneissChartConfig = {
 	bargridLabelMargin: 4, //the horizontal space between a bargrid bar and it's label
 	bargridBarThickness: 20, //thickness of the bars in a bargrid
 	xAxisMargin: 8, //the vertical space between the plot area and the x axis
-	footerMargin: 4, //the vertical space between the bottom of the bounding box and the meta information
+	footerMargin: 0, //the vertical space between the bottom of the bounding box and the meta information
 	legendLabelSpacingX: 5, //the horizontal space between legend items
 	legendLabelSpacingY: 4, //the vertical space between legend items 
 	columnGap: 1, //the horizontal space between two columns that have the same x-axis value
+	columnGroupGap: 5, //the minimum horizontal space between two groups of columns
 	axisBarGap: 5, //the horizontal space between a vertical axis and an adjacent bar
 	maxColumnWidth: 7.5, // the maximum width of a column as a percent of the available chart width	primaryAxisPosition: "right", // the first axis will be rendered on this side, "right" or "left" only
 	primaryAxisPosition: "right", // the first axis will be rendered on this side, "right" or "left" only
@@ -43,7 +44,7 @@ Gneiss.defaultGneissChartConfig = {
 	colors: ["#ff4cf4","#ffb3ff","#e69ce6","#cc87cc","#b373b3","#995f99","#804c80","#665266","#158eff","#99cdff","#9cc2e6","#87abcc","#7394b3","#5f7d99","#466780","#525c66"], 
 	padding :{
 		top: 5,
-		bottom: 50,
+		bottom: 60,
 		left: 10,
 		right: 10
 	},
@@ -256,7 +257,32 @@ Gneiss.helper = {
     var separator = elem.attr("transform").indexOf(",") > -1 ? "," : " ";
     var trans = elem.attr("transform").split(separator);
     return { x: (trans[0] ? parseFloat(trans[0].split("(")[1]) : 0), y: (trans[1] ? parseFloat(trans[1].split(")")[0] ): 0) };
-  }
+  },
+	wrap: function(text, size) {
+		//from http://bl.ocks.org/mbostock/7555321
+		text.each(function() {
+			var text = d3.select(this),
+				words = text.text().split(/[\s]+/).reverse(),
+				word,
+				line = [],
+				lineNumber = 0,
+				lineHeight = 1.2, // ems
+				y = text.attr("y"),
+				x = text.attr("x"),
+				dy = parseFloat(text.attr("dy")),
+				tspan = text.text(null).append("tspan").attr("x", x).attr("y", y).attr("dy", dy + "em");
+			while (word = words.pop()) {
+				line.push(word);
+				tspan.text(line.join(" "));
+				if (tspan.node().getComputedTextLength() > size) {
+					line.pop();
+					tspan.text(line.join(" "));
+					line = [word];
+					tspan = text.append("tspan").attr("x", x).attr("y", y).attr("dy", lineHeight + "em").text(word);
+				}
+			}
+		});
+	}
 };
 
 function Gneiss(config)
@@ -305,6 +331,7 @@ function Gneiss(config)
 	var columnWidth;
 	var columnGroupWidth;
 	var columnGroupShift;
+	var columnGroupGap;
 			
 	this.containerId = function Gneiss$containerId(elem) {
 		if (!arguments.length) {
@@ -598,6 +625,14 @@ function Gneiss(config)
 
 		hasColumns = b;
 	};
+
+	this.columnGroupGap = function Gneiss$columnGroupGap(n) {
+		if(!arguments.length) {
+			return columnGroupGap
+		}
+
+		columnGroupGap = n;
+	}
 	
 	this.build = function Gneiss$build(config) {
 		/*
@@ -644,6 +679,7 @@ function Gneiss(config)
 		g.bargridLabelBottomMargin(config.bargridLabelBottomMargin *1);
 		g.axisBarGap(config.axisBarGap * 1);
 		g.allowAxisOverlap(config.allowAxisOverlap);
+		g.columnGroupGap(config.columnGroupGap * 1);
 		
 
 
@@ -728,7 +764,7 @@ function Gneiss(config)
 			.attr("width",g.width()-g.padding().left-g.padding().right)
 			.attr("height",g.height()-g.padding().top-g.padding().bottom);
       
-		g.updateMetaAndTitle();	
+		//g.updateMetaAndTitle();	
 		
 		return this;
 	};
@@ -853,7 +889,7 @@ function Gneiss(config)
 		}
 
 		//add the height of the source line if there is a sourceline and it's more than one line
-		//padding_bottom += g.sourceElement().text() != "" && g.sourceElement().attr("dy") != 0 ? g.sourceElement()[0][0].getBBox().height : 0;
+		padding_bottom += g.sourceElement().text() != "" && g.sourceElement().attr("dy") != 0 ? g.footerElement()[0][0].getBBox().height - g.creditElement()[0][0].getBBox().height : 0;
 		
 		g.padding().top = padding_top;
 		g.padding().bottom = padding_bottom;
@@ -1462,13 +1498,25 @@ function Gneiss(config)
 		// Determine the proper column width
 		var effectiveChartWidth = g.width() - g.padding().right - g.padding().left - g.axisBarGap();
 
-		var columnWidth = Math.floor((effectiveChartWidth / numDataPoints) / numColumnSeries);
+		var columnWidth = Math.floor(((effectiveChartWidth / numDataPoints) / numColumnSeries) - g.columnGroupGap());
+
 		columnWidth = columnWidth - g.columnGap()
 		// Make sure the columns are at least a pixel wide
 		columnWidth = Math.max(columnWidth, 1);
 
 		// Make sure columns are not wider than the specified portion of the available width
 		columnWidth = Math.min(columnWidth, effectiveChartWidth * g.maxColumnWidth()/100);
+		
+		var columnGroupWidth = (columnWidth * numColumnSeries) + (g.columnGap() * (numColumnSeries-1));
+
+		//calculate the space between groups
+		var defaultGroupGap = (effectiveChartWidth - (columnGroupWidth * numDataPoints)) / numColumnSeries
+
+		//if the groups of bars are closer together than the bars of the same group or the column group gap set make the bars skinnier
+		if(defaultGroupGap < g.columnGroupGap()) {
+			columnWidth = Math.round(columnWidth - (((g.columnGroupGap()/2) - defaultGroupGap) /  numColumnSeries))
+		}
+
 		g.columnWidth(columnWidth);
 		g.columnGroupWidth((columnWidth + g.columnGap()) * numColumnSeries);
 		g.columnGroupShift(columnWidth + g.columnGap()); 
@@ -1997,14 +2045,17 @@ function Gneiss(config)
 		var sourceElementDY = 0;
 		var sourceElementTA = "end"
 
+
 		//place the footer elements in the right place
 
 		//test if the text elements are overlapping
 		creditBBox =  g.creditElement()[0][0].getBBox()
 
-		if(sourceElementX - g.sourceElement()[0][0].getBBox().width < creditBBox.width + creditBBox.x) {
+		var isOverlapping = sourceElementX - g.sourceElement()[0][0].getBBox().width < creditBBox.width + creditBBox.x + 15
+
+		if(isOverlapping) {
 			//if they're overlapping stack the elements and align left
-			sourceElementDY = "1.2em";
+			sourceElementDY = "1.4em";
 			sourceElementX = g.padding().left;
 			sourceElementTA = "start"
 		}
@@ -2014,8 +2065,12 @@ function Gneiss(config)
 						.attr("dy", sourceElementDY)
 						.attr("text-anchor", sourceElementTA);
 
-		g.footerElement().attr("transform","translate(0," + (g.height() - g.footerElement()[0][0].getBBox().height + g.sourceElement()[0][0].getBBox().height - g.footerMargin()) + ")");
+		g.footerElement().attr("transform", "translate(0," + (g.height() - g.footerElement()[0][0].getBBox().height - g.footerMargin()) + ")");
 
+		if(isOverlapping) {
+			g.sourceElement().text(g.source())
+			g.sourceElement().call(Gneiss.helper.wrap, g.width()-g.padding().left-g.padding().right)
+		}
 		return this;
 	};
   
