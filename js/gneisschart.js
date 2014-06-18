@@ -271,6 +271,7 @@ Gneiss.helper = {
 				x = text.attr("x"),
 				dy = parseFloat(text.attr("dy")),
 				tspan = text.text(null).append("tspan").attr("x", x).attr("y", y).attr("dy", dy + "em");
+
 			while (word = words.pop()) {
 				line.push(word);
 				tspan.text(line.join(" "));
@@ -2045,6 +2046,8 @@ function Gneiss(config)
 		var sourceElementDY = 0;
 		var sourceElementTA = "end"
 
+		//the default values for the credit element
+		var creditElementX = g.padding().left;
 
 		//place the footer elements in the right place
 
@@ -2065,12 +2068,23 @@ function Gneiss(config)
 						.attr("dy", sourceElementDY)
 						.attr("text-anchor", sourceElementTA);
 
-		g.footerElement().attr("transform", "translate(0," + (g.height() - g.footerElement()[0][0].getBBox().height - g.footerMargin()) + ")");
+
+		console.log(sourceElementX,isOverlapping)
+		g.creditElement().attr("x",creditElementX);
 
 		if(isOverlapping) {
 			g.sourceElement().text(g.source())
 			g.sourceElement().call(Gneiss.helper.wrap, g.width()-g.padding().left-g.padding().right)
 		}
+		else {
+			// bug in chrome where position wont update without this
+			g.creditElement().text(g.credit());
+			g.sourceElement().text(g.source());
+		}
+
+		g.footerElement().attr("transform", "translate(0," + (g.height() - g.footerElement()[0][0].getBBox().height - g.footerMargin()) + ")");
+
+		
 		return this;
 	};
   
