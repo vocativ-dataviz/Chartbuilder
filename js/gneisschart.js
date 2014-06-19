@@ -28,7 +28,7 @@ Gneiss.defaultGneissChartConfig = {
 	bargridLabelMargin: 4, //the horizontal space between a bargrid bar and it's label
 	bargridBarThickness: 20, //thickness of the bars in a bargrid
 	xAxisMargin: 8, //the vertical space between the plot area and the x axis
-	footerMargin: 0, //the vertical space between the bottom of the bounding box and the meta information
+	footerMargin: 6, //the vertical space between the bottom of the bounding box and the meta information
 	legendLabelSpacingX: 5, //the horizontal space between legend items
 	legendLabelSpacingY: 4, //the vertical space between legend items 
 	columnGap: 1, //the horizontal space between two columns that have the same x-axis value
@@ -1863,7 +1863,7 @@ function Gneiss(config)
 
 				lineSeries.transition()
 					.duration(500)
-					.attr("d",function(d,j) { yAxisIndex = d.axis; pathString = g.yAxis()[d.axis].line(d.data); console.log(d.data); return pathString;})
+					.attr("d",function(d,j) { yAxisIndex = d.axis; pathString = g.yAxis()[d.axis].line(d.data); return pathString;})
 
 				lineSeries.exit().remove()
 			
@@ -2044,12 +2044,12 @@ function Gneiss(config)
 		var creditBBox;
 
 		//the default values for the source element
-		var sourceElementX = g.width() - g.padding().right;;
+		var sourceElementX = g.width() - g.defaultPadding().right;;
 		var sourceElementDY = 0;
 		var sourceElementTA = "end"
 
 		//the default values for the credit element
-		var creditElementX = g.padding().left;
+		var creditElementX = g.defaultPadding().left;
 
 		//place the footer elements in the right place
 
@@ -2061,7 +2061,7 @@ function Gneiss(config)
 		if(isOverlapping) {
 			//if they're overlapping stack the elements and align left
 			sourceElementDY = "1.4em";
-			sourceElementX = g.padding().left;
+			sourceElementX = g.defaultPadding().left;
 			sourceElementTA = "start"
 		}
 
@@ -2071,12 +2071,12 @@ function Gneiss(config)
 			.attr("dy", sourceElementDY)
 			.attr("text-anchor", sourceElementTA)
 			.text(g.source())
-			.call(Gneiss.helper.wrap, g.width()-g.padding().left-g.padding().right);
+			.call(Gneiss.helper.wrap, g.width()-g.defaultPadding().left-g.defaultPadding().right);
 
 		g.creditElement().text(g.credit())
 			.attr("x",creditElementX);
 
-		g.footerElement().attr("transform", "translate(0," + (g.height() - g.footerElement()[0][0].getBBox().height - g.footerMargin()) + ")");
+		g.footerElement().attr("transform", "translate(0," + (g.height() - g.footerMargin() - (g.footerElement()[0][0].getBBox().height - g.creditElement()[0][0].getBBox().height)) + ")");
 
 
 		return this;
