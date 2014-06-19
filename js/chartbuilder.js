@@ -960,11 +960,15 @@ ChartBuilder.start = function(config) {
 			
 			ChartBuilder.setChartArea();
 			
-			chart.setYScales()
+			chart.resize().
+				setYScales()
 				.setXScales()
-				.setLineMakers();
+				.setLineMakers()
+				.setPadding();
 				
 			ChartBuilder.redraw();
+
+
 			ChartBuilder.inlineAllStyles();
 		}
   
@@ -1060,6 +1064,8 @@ ChartBuilder.start = function(config) {
 		chart.resize();
 		chart.redraw();
 
+		chart.setPadding();
+
 		ChartBuilder.setChartArea();
 		chart.resize();
 		chart.redraw();
@@ -1072,6 +1078,8 @@ ChartBuilder.start = function(config) {
 		
 		chart.resize();
 		chart.redraw();
+
+		chart.setPadding();
 
 		ChartBuilder.setChartArea();
 		chart.resize();
