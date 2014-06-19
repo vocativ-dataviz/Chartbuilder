@@ -269,9 +269,9 @@ Gneiss.helper = {
 				lineHeight = 1.2, // ems
 				y = text.attr("y"),
 				x = text.attr("x"),
-				dy = parseFloat(text.attr("dy")),
+				dy = parseFloat(text.attr("dy")) || 0,
 				tspan = text.text(null).append("tspan").attr("x", x).attr("y", y).attr("dy", dy + "em");
-
+				text.attr("dy",null)
 			while (word = words.pop()) {
 				line.push(word);
 				tspan.text(line.join(" "));
@@ -972,8 +972,10 @@ function Gneiss(config)
 				g.yAxis()[i].line = d3.svg.line();
 			}
 
-			g.yAxis()[i].line.y(function(d,j){ return d || d === 0 ? g.yAxis()[yAxisIndex].scale(d) : null });
-			g.yAxis()[i].line.x(function(d,j){ return d || d === 0 ? g.xAxis().scale(g.xAxisRef()[0].data[j]) : null });
+			g.yAxis()[i].line.y(function(d,j){ return g.yAxis()[yAxisIndex].scale(d)});
+			g.yAxis()[i].line.x(function(d,j){ return g.xAxis().scale(g.xAxisRef()[0].data[j])});
+			//if the data point is not a number create a break in the line
+			g.yAxis()[i].line.defined(function(d,j){return !isNaN(d) && d != null })
 
 		}
 		return this;
@@ -1592,7 +1594,7 @@ function Gneiss(config)
 				lineSeries.data(sbt.line)
 					.enter()
 					.append("path")
-						.attr("d",function(d,j) { yAxisIndex = d.axis; pathString = g.yAxis()[d.axis].line(d.data).split("L0,0").join("M").split("L0,0").join("");  return pathString.indexOf("NaN")==-1?pathString:"M0,0"})
+						.attr("d",function(d,j) { yAxisIndex = d.axis; return g.yAxis()[d.axis].line(d.data);})
 						.attr("class","seriesLine seriesGroup")
 						.attr("stroke",function(d,i){return d.color? d.color : colors[i]})
 				
@@ -1855,13 +1857,13 @@ function Gneiss(config)
 
 				lineSeries.enter()
 					.append("path")
-						.attr("d",function(d,j) { yAxisIndex = d.axis; pathString = g.yAxis()[d.axis].line(d.data).split("L0,0L").join("M0,0M").split("L0,0").join(""); return pathString;})
+						.attr("d",function(d,j) { yAxisIndex = d.axis; pathString = g.yAxis()[d.axis].line(d.data); return pathString;})
 						.attr("class","seriesLine")
 						.attr("stroke",function(d,i){return d.color? d.color : colors[i]})
 
 				lineSeries.transition()
 					.duration(500)
-					.attr("d",function(d,j) { yAxisIndex = d.axis; pathString = g.yAxis()[d.axis].line(d.data).split("L0,0L").join("M0,0M").split("L0,0").join(""); return pathString;})
+					.attr("d",function(d,j) { yAxisIndex = d.axis; pathString = g.yAxis()[d.axis].line(d.data); console.log(d.data); return pathString;})
 
 				lineSeries.exit().remove()
 			
@@ -2064,27 +2066,19 @@ function Gneiss(config)
 		}
 
 		//update the source element with the propper values
-		g.sourceElement().attr("x", sourceElementX)
-						.attr("dy", sourceElementDY)
-						.attr("text-anchor", sourceElementTA);
+		g.sourceElement()
+			.attr("x", sourceElementX)
+			.attr("dy", sourceElementDY)
+			.attr("text-anchor", sourceElementTA)
+			.text(g.source())
+			.call(Gneiss.helper.wrap, g.width()-g.padding().left-g.padding().right);
 
-
-		console.log(sourceElementX,isOverlapping)
-		g.creditElement().attr("x",creditElementX);
-
-		if(isOverlapping) {
-			g.sourceElement().text(g.source())
-			g.sourceElement().call(Gneiss.helper.wrap, g.width()-g.padding().left-g.padding().right)
-		}
-		else {
-			// bug in chrome where position wont update without this
-			g.creditElement().text(g.credit());
-			g.sourceElement().text(g.source());
-		}
+		g.creditElement().text(g.credit())
+			.attr("x",creditElementX);
 
 		g.footerElement().attr("transform", "translate(0," + (g.height() - g.footerElement()[0][0].getBBox().height - g.footerMargin()) + ")");
 
-		
+
 		return this;
 	};
   
