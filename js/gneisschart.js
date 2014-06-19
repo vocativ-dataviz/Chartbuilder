@@ -753,11 +753,6 @@ function Gneiss(config)
 		// Save the width and height in pixels
 		g.width(g.containerElement().width());
 		g.height(g.containerElement().height());
-    
-		// Insert a background rectangle to prevent transparency
-		d3.select("rect#ground")
-			.attr("width", g.width())
-			.attr("height", g.height());
       
 		//g.updateMetaAndTitle();	
 		
@@ -2101,6 +2096,19 @@ function Gneiss(config)
 		graph.hasColumns(seriesByType.column.length > 0);
 		graph.isBargrid(seriesByType.bargrid.length > 0);
 	};
+
+  this.updateGroundRects = function Gneiss$updateGroundRects() {
+ 		// Insert a background rectangle to prevent transparency
+ 		d3.select("rect#ground")
+ 			.attr("width", g.width())
+ 			.attr("height", g.height());
+
+ 		//insert a background rectagle to style the plot area
+ 		d3.select("rect#plotArea")
+ 			.attr("transform","translate("+g.padding().left+","+g.padding().top+")")
+ 			.attr("width",g.width()-g.padding().left-g.padding().right)
+ 			.attr("height",g.height()-g.padding().top-g.padding().bottom);
+  }
   
   this.redraw = function Gneiss$redraw() {
   		
@@ -2127,14 +2135,8 @@ function Gneiss(config)
 			.setYAxes()
 			.setXAxis()
 			.drawSeriesAndLegend()
+			.updateGroundRects()
 			.updateMetaAndTitle();
-
-		//insert a background rectagle to style the plot area
-		d3.select("rect#plotArea")
-			.attr("transform","translate("+g.padding().left+","+g.padding().top+")")
-			.attr("width",g.width()-g.padding().left-g.padding().right)
-			.attr("height",g.height()-g.padding().top-g.padding().bottom);
-		
 
 		return g;
 	};
