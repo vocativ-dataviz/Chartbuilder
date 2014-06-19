@@ -879,7 +879,7 @@ function Gneiss(config)
 		}
 
 		//add the height of the source line if there is a sourceline and it's more than one line
-		padding_bottom += g.sourceElement().text() != "" && g.sourceElement().attr("dy") != 0 ? g.footerElement()[0][0].getBBox().height - g.creditElement()[0][0].getBBox().height : 0;
+		padding_bottom += g.sourceElement().text() != "" && g.sourceElement().attr("dy") != 0 ? g.footerElement()[0][0].getBoundingClientRect().height - g.creditElement()[0][0].getBoundingClientRect().height : 0;
 		
 		g.padding().top = padding_top;
 		g.padding().bottom = padding_bottom;
@@ -1767,7 +1767,7 @@ function Gneiss(config)
 						var yAxisIndex = d3.select(this.parentNode).data()[0].axis,
 						x = g.bargridLabelMargin() + g.yAxis()[yAxisIndex].scale(0) - (d<0?Math.abs(g.yAxis()[yAxisIndex].scale(d) - g.yAxis()[yAxisIndex].scale(0)):0) + Math.abs(g.yAxis()[yAxisIndex].scale(d) - g.yAxis()[yAxisIndex].scale(0)),
 						
-						bbox = this.getBBox()
+						bbox = this.getBoundingClientRect()
 						parentCoords = Gneiss.helper.transformCoordOf(d3.select(this.parentNode))
 						if (x + bbox.width + parentCoords.x > g.width()) {
 							//the label will fall off the edge and thus the chart needs more padding
@@ -2043,9 +2043,9 @@ function Gneiss(config)
 		//place the footer elements in the right place
 
 		//test if the text elements are overlapping
-		creditBBox =  g.creditElement()[0][0].getBBox()
+		creditBBox =  g.creditElement()[0][0].getBoundingClientRect()
 
-		var isOverlapping = sourceElementX - g.sourceElement()[0][0].getBBox().width < creditBBox.width + creditBBox.x + 15
+		var isOverlapping = sourceElementX - g.sourceElement()[0][0].getBoundingClientRect().width < creditBBox.width + creditBBox.left + 15
 
 		if(isOverlapping) {
 			//if they're overlapping stack the elements and align left
@@ -2065,7 +2065,7 @@ function Gneiss(config)
 		g.creditElement().text(g.credit())
 			.attr("x",creditElementX);
 
-		g.footerElement().attr("transform", "translate(0," + (g.height() - g.footerMargin() - (g.footerElement()[0][0].getBBox().height - g.creditElement()[0][0].getBBox().height)) + ")");
+		g.footerElement().attr("transform", "translate(0," + (g.height() - g.footerMargin() - (g.footerElement()[0][0].getBoundingClientRect().height - g.creditElement()[0][0].getBoundingClientRect().height)) + ")");
 
 
 		return this;
@@ -2098,6 +2098,7 @@ function Gneiss(config)
 	};
 
   this.updateGroundRects = function Gneiss$updateGroundRects() {
+  	    var g = this;
  		// Insert a background rectangle to prevent transparency
  		d3.select("rect#ground")
  			.attr("width", g.width())
@@ -2108,6 +2109,8 @@ function Gneiss(config)
  			.attr("transform","translate("+g.padding().left+","+g.padding().top+")")
  			.attr("width",g.width()-g.padding().left-g.padding().right)
  			.attr("height",g.height()-g.padding().top-g.padding().bottom);
+
+ 		return g;
   }
   
   this.redraw = function Gneiss$redraw() {
@@ -2122,7 +2125,6 @@ function Gneiss(config)
 		g.seriesByType(g.splitSeriesByType(g.series()));
 		g.updateGraphPropertiesBasedOnSeriesType(g, g.seriesByType());
 
-		console.log(wasBargrid,g.isBargrid())
 		if(!wasBargrid && g.isBargrid()) {
 			g.resize();
 		}

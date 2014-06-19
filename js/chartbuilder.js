@@ -23,7 +23,7 @@ ChartBuilder = {
 		var delim = String.fromCharCode(9);
 
 		if (delim == this.separators.thousands || delim == this.separators.decimal) {
-			console.warn("Your text deliminator is the same as your locale's thousands separator or decimal separator")
+			console.warn("Your text deliminator is the same as your locale's thousands separator or decimal separator");
 		}
 		
 		// Trim leading and trailing spaces from rows and split
@@ -1085,9 +1085,11 @@ ChartBuilder.start = function(config) {
 		ChartBuilder.setChartArea();
 		chart.resize()
 			.setPadding()
-			.setYScales();
+
 		ChartBuilder.setChartArea();
-		chart.redraw();
+
+		chart.resize()
+			.redraw();
 
 		ChartBuilder.makeLegendAdjustable();
 		
