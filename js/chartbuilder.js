@@ -485,7 +485,17 @@ ChartBuilder = {
 					}
 				}
 
-				var hasBargrid = false;
+				if(val == "bargrid") {
+					//set the chart type to bargrid
+					chart.isBargrid(true)
+
+					chart.setPadding();
+					ChartBuilder.setChartArea();
+					chart.setXScales()
+						.resize();
+					ChartBuilder.redraw();
+				}
+
 				chart.setPadding();
 				ChartBuilder.setChartArea();
 				chart.setXScales()
@@ -609,15 +619,9 @@ ChartBuilder = {
 		}
 	},
 	setChartArea: function() {
-		var hasBargrid = false;
-		for (var i = chart.series().length - 1; i >= 0; i--){
-			if(chart.series()[i].type == "bargrid") {
-				hasBargrid = true;
-				break;
-			}
-		}
-		
-		if(hasBargrid) {
+		$("#chartContainer").removeAttr("height").css("height","");
+
+		if(chart.isBargrid()) {
 			$("#chartContainer").css("height",
 				chart.series()[0].data.length * (chart.bargridBarThickness() + 2) + //CHANGE - MAGIC NUMBER
 				chart.padding().top +
@@ -625,13 +629,13 @@ ChartBuilder = {
 				);
 		}
 		else {
-			$("#chartContainer").removeAttr("height").css("height","");
+			//if there is a multiline footer increase the chart height to accomodate it
+			if(chart.footerElement()[0][0].getBBox().height > Math.max(chart.creditElement()[0][0].getBBox().height,chart.sourceElement()[0][0].getBBox().height)){
+				$("#chartContainer").css("height", $("#chartContainer").height() + chart.footerElement()[0][0].getBBox().height - chart.creditElement()[0][0].getBBox().height);
+			}
 		}
 
-		//if there is a multiline footer increase the chart height to accomodate it
-		if(chart.footerElement()[0][0].getBBox().height > Math.max(chart.creditElement()[0][0].getBBox().height,chart.sourceElement()[0][0].getBBox().height)){
-			$("#chartContainer").css("height", $("#chartContainer").height() + chart.footerElement()[0][0].getBBox().height - chart.creditElement()[0][0].getBBox().height);
-		}
+
 	},
 	makeLegendAdjustable: function() {
 		
@@ -1077,11 +1081,14 @@ ChartBuilder.start = function(config) {
 	$("#chart_title").keyup(function() {
 		var val = $(this).val();
 		chart.title(val);
-		chart.resize()
-			.setPadding();
+
 		ChartBuilder.setChartArea();
-		chart.setYScales()
-			.redraw();
+		chart.resize()
+			.setPadding()
+			.setYScales();
+		ChartBuilder.setChartArea();
+		chart.redraw();
+
 		ChartBuilder.makeLegendAdjustable();
 		
 		chart.titleElement().text(chart.title());

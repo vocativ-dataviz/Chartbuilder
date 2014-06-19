@@ -758,12 +758,6 @@ function Gneiss(config)
 		d3.select("rect#ground")
 			.attr("width", g.width())
 			.attr("height", g.height());
-
-		//insert a background rectagle to style the plot area
-		d3.select("rect#plotArea")
-			.attr("transform","translate("+g.padding().left+","+g.padding().top+")")
-			.attr("width",g.width()-g.padding().left-g.padding().right)
-			.attr("height",g.height()-g.padding().top-g.padding().bottom);
       
 		//g.updateMetaAndTitle();	
 		
@@ -2110,27 +2104,39 @@ function Gneiss(config)
   
   this.redraw = function Gneiss$redraw() {
   		
-
+  		var g = this;
 		/*
 			Redraw the chart
 		*/
-				
+		var wasBargrid = g.isBargrid();
+
 		//group the series by their type
-		this.seriesByType(this.splitSeriesByType(this.series()));
-		this.updateGraphPropertiesBasedOnSeriesType(this, this.seriesByType());
+		g.seriesByType(g.splitSeriesByType(g.series()));
+		g.updateGraphPropertiesBasedOnSeriesType(g, g.seriesByType());
 
-		this.calculateColumnWidths()
+		console.log(wasBargrid,g.isBargrid())
+		if(!wasBargrid && g.isBargrid()) {
+			g.resize();
+		}
 
-		this.setPadding()
+		g.calculateColumnWidths()
+
+		g.setPadding()
 			.setYScales()
 			.setXScales()
 			.setYAxes()
 			.setXAxis()
 			.drawSeriesAndLegend()
 			.updateMetaAndTitle();
+
+		//insert a background rectagle to style the plot area
+		d3.select("rect#plotArea")
+			.attr("transform","translate("+g.padding().left+","+g.padding().top+")")
+			.attr("width",g.width()-g.padding().left-g.padding().right)
+			.attr("height",g.height()-g.padding().top-g.padding().bottom);
 		
 
-		return this;
+		return g;
 	};
   
   // Call build() when someone attempts to construct a new Gneiss object
