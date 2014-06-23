@@ -1090,7 +1090,6 @@ ChartBuilder.start = function(config) {
 		var val = $(this).val();
 		chart.title(val);
 
-		ChartBuilder.setChartArea();
 		chart.resize()
 			.setPadding()
 
