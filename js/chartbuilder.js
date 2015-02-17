@@ -23,7 +23,7 @@ ChartBuilder = {
 		var delim = String.fromCharCode(9);
 
 		if (delim == this.separators.thousands || delim == this.separators.decimal) {
-			console.warn("Your text deliminator is the same as your locale's thousands separator or decimal separator")
+			console.warn("Your text deliminator is the same as your locale's thousands separator or decimal separator");
 		}
 		
 		// Trim leading and trailing spaces from rows and split
@@ -501,7 +501,17 @@ ChartBuilder = {
 					}
 				}
 
-				var hasBargrid = false;
+				if(val == "bargrid") {
+					//set the chart type to bargrid
+					chart.isBargrid(true)
+
+					chart.setPadding();
+					ChartBuilder.setChartArea();
+					chart.setXScales()
+						.resize();
+					ChartBuilder.redraw();
+				}
+
 				chart.setPadding();
 				ChartBuilder.setChartArea();
 				chart.setXScales()
@@ -625,15 +635,9 @@ ChartBuilder = {
 		}
 	},
 	setChartArea: function() {
-		var hasBargrid = false;
-		for (var i = chart.series().length - 1; i >= 0; i--){
-			if(chart.series()[i].type == "bargrid") {
-				hasBargrid = true;
-				break;
-			}
-		}
-		
-		if(hasBargrid) {
+		$("#chartContainer").removeAttr("height").css("height","");
+
+		if(chart.isBargrid()) {
 			$("#chartContainer").css("height",
 				chart.series()[0].data.length * (chart.bargridBarThickness() + 2) + //CHANGE - MAGIC NUMBER
 				chart.padding().top +
@@ -641,8 +645,13 @@ ChartBuilder = {
 				);
 		}
 		else {
-			$("#chartContainer").removeAttr("height").css("height","");
+			//if there is a multiline footer increase the chart height to accomodate it
+			if(chart.footerElement()[0][0].getBBox().height > Math.max(chart.creditElement()[0][0].getBBox().height,chart.sourceElement()[0][0].getBBox().height)){
+				$("#chartContainer").css("height", $("#chartContainer").height() + chart.footerElement()[0][0].getBBox().height - chart.creditElement()[0][0].getBBox().height);
+			}
 		}
+
+
 	},
 	makeLegendAdjustable: function() {
 		
@@ -968,11 +977,15 @@ ChartBuilder.start = function(config) {
 			
 			ChartBuilder.setChartArea();
 			
-			chart.setYScales()
+			chart.resize().
+				setYScales()
 				.setXScales()
-				.setLineMakers();
+				.setLineMakers()
+				.setPadding();
 				
 			ChartBuilder.redraw();
+
+
 			ChartBuilder.inlineAllStyles();
 		}
   
@@ -1062,24 +1075,46 @@ ChartBuilder.start = function(config) {
 	
 	$("#creditLine").keyup(function() {
 		var val = $(this).val();
-		chart.credit(val);
+		chart.credit(val)
 		chart.creditElement().text(chart.credit());
+
+		chart.resize();
+		chart.redraw();
+
+		chart.setPadding();
+
+		ChartBuilder.setChartArea();
+		chart.resize();
+		chart.redraw();
 	});
 		
 	$("#sourceLine").keyup(function() {
 		var val = $(this).val();
 		chart.source(val);
 		chart.sourceElement().text(chart.source());
+		
+		chart.resize();
+		chart.redraw();
+
+		chart.setPadding();
+
+		ChartBuilder.setChartArea();
+		chart.resize();
+		chart.redraw();
 	});
 	
 	$("#chart_title").keyup(function() {
 		var val = $(this).val();
 		chart.title(val);
+
 		chart.resize()
-			.setPadding();
+			.setPadding()
+
 		ChartBuilder.setChartArea();
-		chart.setYScales()
+
+		chart.resize()
 			.redraw();
+
 		ChartBuilder.makeLegendAdjustable();
 		
 		chart.titleElement().text(chart.title());
@@ -1088,6 +1123,18 @@ ChartBuilder.start = function(config) {
 	$(".downloadLink").click(function() {
 		$("#downloadLinksDiv").toggleClass("hide");
 	});
+
+	$("#chart_size").change(function() {
+  		$("#chartContainer").attr("class",$(this).val())
+  		$("#chartContainer").css("height","").attr("height","")
+
+  		chart.resize()
+  		chart.redraw()
+
+  		ChartBuilder.setChartArea();
+		chart.resize();
+		chart.redraw();
+  	})
 
 	//store the decimal and thousands separators
 	ChartBuilder.separators = ChartBuilder.determineLocaleNumberSeps();
