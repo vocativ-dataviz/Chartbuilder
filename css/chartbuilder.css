@@ -122,18 +122,18 @@ table {
 *Custom Chart Sizes
 */
 #chartContainer.size_normal {
-	width: 600px;
-	height: 338px;
+	width: 620px;
+	height: 420px;
 }
 
 #chartContainer.size_longandskinny {
-	width: 200px;
-	height: 600px;
+	width: 620px;
+	height: 915px;
 }
 
 #chartContainer.size_spot {
-	width: 200px;
-	height: 250px;
+	width: 620px;
+	height: 620px;
 }
 
 
