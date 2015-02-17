@@ -191,11 +191,14 @@
 		//This loads the webfonts and starts Chartbuilder once they're present
 		WebFont.load({
 			custom: {
-				families: ["Cutive"]
+				families: ["Open Sans"]
 			},
 		    active: function(name) {
 		        $(document).ready(function() {
-		            ChartBuilder.start();
+		            ChartBuilder.start({
+                  colors: ["#344359","#3399DC","#1CABA5","#ED715C","#E34848","#8C74E4"],
+                  creditline: 'Vocativ'
+                });
 		        });
 		    }
 		});
