@@ -28,10 +28,11 @@ Gneiss.defaultGneissChartConfig = {
 	bargridLabelMargin: 4, //the horizontal space between a bargrid bar and it's label
 	bargridBarThickness: 20, //thickness of the bars in a bargrid
 	xAxisMargin: 8, //the vertical space between the plot area and the x axis
-	footerMargin: 4, //the vertical space between the bottom of the bounding box and the meta information
+	footerMargin: 6, //the vertical space between the bottom of the bounding box and the meta information
 	legendLabelSpacingX: 5, //the horizontal space between legend items
 	legendLabelSpacingY: 4, //the vertical space between legend items 
 	columnGap: 1, //the horizontal space between two columns that have the same x-axis value
+	columnGroupGap: 5, //the minimum horizontal space between two groups of columns
 	axisBarGap: 5, //the horizontal space between a vertical axis and an adjacent bar
 	maxColumnWidth: 7.5, // the maximum width of a column as a percent of the available chart width	primaryAxisPosition: "right", // the first axis will be rendered on this side, "right" or "left" only
 	primaryAxisPosition: "right", // the first axis will be rendered on this side, "right" or "left" only
@@ -43,7 +44,7 @@ Gneiss.defaultGneissChartConfig = {
 	colors: ["#ff4cf4","#ffb3ff","#e69ce6","#cc87cc","#b373b3","#995f99","#804c80","#665266","#158eff","#99cdff","#9cc2e6","#87abcc","#7394b3","#5f7d99","#466780","#525c66"], 
 	padding :{
 		top: 5,
-		bottom: 50,
+		bottom: 60,
 		left: 10,
 		right: 10
 	},
@@ -256,7 +257,33 @@ Gneiss.helper = {
     var separator = elem.attr("transform").indexOf(",") > -1 ? "," : " ";
     var trans = elem.attr("transform").split(separator);
     return { x: (trans[0] ? parseFloat(trans[0].split("(")[1]) : 0), y: (trans[1] ? parseFloat(trans[1].split(")")[0] ): 0) };
-  }
+  },
+	wrap: function(text, size) {
+		//from http://bl.ocks.org/mbostock/7555321
+		text.each(function() {
+			var text = d3.select(this),
+				words = text.text().split(/[\s]+/).reverse(),
+				word,
+				line = [],
+				lineNumber = 0,
+				lineHeight = 1.2, // ems
+				y = text.attr("y"),
+				x = text.attr("x"),
+				dy = parseFloat(text.attr("dy")) || 0,
+				tspan = text.text(null).append("tspan").attr("x", x).attr("y", y).attr("dy", dy + "em");
+				text.attr("dy",null)
+			while (word = words.pop()) {
+				line.push(word);
+				tspan.text(line.join(" "));
+				if (tspan.node().getComputedTextLength() > size) {
+					line.pop();
+					tspan.text(line.join(" "));
+					line = [word];
+					tspan = text.append("tspan").attr("x", x).attr("y", y).attr("dy", lineHeight + "em").text(word);
+				}
+			}
+		});
+	}
 };
 
 function Gneiss(config)
@@ -305,6 +332,7 @@ function Gneiss(config)
 	var columnWidth;
 	var columnGroupWidth;
 	var columnGroupShift;
+	var columnGroupGap;
 			
 	this.containerId = function Gneiss$containerId(elem) {
 		if (!arguments.length) {
@@ -598,6 +626,14 @@ function Gneiss(config)
 
 		hasColumns = b;
 	};
+
+	this.columnGroupGap = function Gneiss$columnGroupGap(n) {
+		if(!arguments.length) {
+			return columnGroupGap
+		}
+
+		columnGroupGap = n;
+	}
 	
 	this.build = function Gneiss$build(config) {
 		/*
@@ -644,6 +680,7 @@ function Gneiss(config)
 		g.bargridLabelBottomMargin(config.bargridLabelBottomMargin *1);
 		g.axisBarGap(config.axisBarGap * 1);
 		g.allowAxisOverlap(config.allowAxisOverlap);
+		g.columnGroupGap(config.columnGroupGap * 1);
 		
 
 
@@ -699,6 +736,8 @@ function Gneiss(config)
 			.attr("x", g.padding().left)
 			.attr("class", "metaText")
 			.text(g.credit()));
+
+		g.updateMetaAndTitle();
       
 		return this;
 	};
@@ -714,19 +753,8 @@ function Gneiss(config)
 		// Save the width and height in pixels
 		g.width(g.containerElement().width());
 		g.height(g.containerElement().height());
-    
-		// Insert a background rectangle to prevent transparency
-		d3.select("rect#ground")
-			.attr("width", g.width())
-			.attr("height", g.height());
-
-		//insert a background rectagle to style the plot area
-		d3.select("rect#plotArea")
-			.attr("transform","translate("+g.padding().left+","+g.padding().top+")")
-			.attr("width",g.width()-g.padding().left-g.padding().right)
-			.attr("height",g.height()-g.padding().top-g.padding().bottom);
       
-		g.footerElement().attr("transform","translate(0," + (g.height() - g.footerMargin()) + ")");
+		//g.updateMetaAndTitle();	
 		
 		return this;
 	};
@@ -849,6 +877,9 @@ function Gneiss(config)
 				padding_top += g.titleElement().text().length != 0 ? title_height + g.titleBottomMargin() : 0
 			} catch(e) {/* A race condition that doesn't matter was met, setPadding will be called again and everything will be okay*/}
 		}
+
+		//add the height of the source line if there is a sourceline and it's more than one line
+		padding_bottom += g.sourceElement().text() != "" && g.sourceElement().attr("dy") != 0 ? g.footerElement()[0][0].getBoundingClientRect().height - g.creditElement()[0][0].getBoundingClientRect().height : 0;
 		
 		g.padding().top = padding_top;
 		g.padding().bottom = padding_bottom;
@@ -930,8 +961,10 @@ function Gneiss(config)
 				g.yAxis()[i].line = d3.svg.line();
 			}
 
-			g.yAxis()[i].line.y(function(d,j){ return d || d === 0 ? g.yAxis()[yAxisIndex].scale(d) : null });
-			g.yAxis()[i].line.x(function(d,j){ return d || d === 0 ? g.xAxis().scale(g.xAxisRef()[0].data[j]) : null });
+			g.yAxis()[i].line.y(function(d,j){ return g.yAxis()[yAxisIndex].scale(d)});
+			g.yAxis()[i].line.x(function(d,j){ return g.xAxis().scale(g.xAxisRef()[0].data[j])});
+			//if the data point is not a number create a break in the line
+			g.yAxis()[i].line.defined(function(d,j){return !isNaN(d) && d != null })
 
 		}
 		return this;
@@ -974,8 +1007,12 @@ function Gneiss(config)
 			}
 			else {
 				curAxis.axis//.ticks(`)[0].ticks) // I'm not using built in ticks because it is too opinionated
-					.tickValues(curAxis.tickValues?curAxis.tickValues:Gneiss.helper.exactTicks(curAxis.scale.domain(),g.yAxis()[0].ticks));
-					
+					.tickValues(curAxis.tickValues?curAxis.tickValues:Gneiss.helper.exactTicks(curAxis.scale.domain(),g.yAxis()[0].ticks))
+					.scale(g.yAxis()[i].scale)
+					.orient(i == 0 ? "right" : "left" )
+					.tickSize(g.width() - g.padding().left - g.padding().right);
+
+
 				axisGroup = g.chartElement().selectAll(i == 0 ? "#rightAxis" : "#leftAxis")
 					.call(curAxis.axis);
 				
@@ -1314,8 +1351,6 @@ function Gneiss(config)
 						hourGap = 1;
 					}
 
-					console.log(hours, hourGap);
-
 
 					switch(g.xAxis().formatter) {
 						case "yy":
@@ -1455,13 +1490,25 @@ function Gneiss(config)
 		// Determine the proper column width
 		var effectiveChartWidth = g.width() - g.padding().right - g.padding().left - g.axisBarGap();
 
-		var columnWidth = Math.floor((effectiveChartWidth / numDataPoints) / numColumnSeries);
+		var columnWidth = Math.floor(((effectiveChartWidth / numDataPoints) / numColumnSeries) - g.columnGroupGap());
+
 		columnWidth = columnWidth - g.columnGap()
 		// Make sure the columns are at least a pixel wide
 		columnWidth = Math.max(columnWidth, 1);
 
 		// Make sure columns are not wider than the specified portion of the available width
 		columnWidth = Math.min(columnWidth, effectiveChartWidth * g.maxColumnWidth()/100);
+		
+		var columnGroupWidth = (columnWidth * numColumnSeries) + (g.columnGap() * (numColumnSeries-1));
+
+		//calculate the space between groups
+		var defaultGroupGap = (effectiveChartWidth - (columnGroupWidth * numDataPoints)) / numColumnSeries
+
+		//if the groups of bars are closer together than the bars of the same group or the column group gap set make the bars skinnier
+		if(defaultGroupGap < g.columnGroupGap()) {
+			columnWidth = Math.round(columnWidth - (((g.columnGroupGap()/2) - defaultGroupGap) /  numColumnSeries))
+		}
+
 		g.columnWidth(columnWidth);
 		g.columnGroupWidth((columnWidth + g.columnGap()) * numColumnSeries);
 		g.columnGroupShift(columnWidth + g.columnGap()); 
@@ -1536,7 +1583,7 @@ function Gneiss(config)
 				lineSeries.data(sbt.line)
 					.enter()
 					.append("path")
-						.attr("d",function(d,j) { yAxisIndex = d.axis; pathString = g.yAxis()[d.axis].line(d.data).split("L0,0").join("M").split("L0,0").join("");  return pathString.indexOf("NaN")==-1?pathString:"M0,0"})
+						.attr("d",function(d,j) { yAxisIndex = d.axis; return g.yAxis()[d.axis].line(d.data);})
 						.attr("class","seriesLine seriesGroup")
 						.attr("stroke",function(d,i){return d.color? d.color : colors[i]})
 				
@@ -1720,7 +1767,7 @@ function Gneiss(config)
 						var yAxisIndex = d3.select(this.parentNode).data()[0].axis,
 						x = g.bargridLabelMargin() + g.yAxis()[yAxisIndex].scale(0) - (d<0?Math.abs(g.yAxis()[yAxisIndex].scale(d) - g.yAxis()[yAxisIndex].scale(0)):0) + Math.abs(g.yAxis()[yAxisIndex].scale(d) - g.yAxis()[yAxisIndex].scale(0)),
 						
-						bbox = this.getBBox()
+						bbox = this.getBoundingClientRect()
 						parentCoords = Gneiss.helper.transformCoordOf(d3.select(this.parentNode))
 						if (x + bbox.width + parentCoords.x > g.width()) {
 							//the label will fall off the edge and thus the chart needs more padding
@@ -1799,13 +1846,13 @@ function Gneiss(config)
 
 				lineSeries.enter()
 					.append("path")
-						.attr("d",function(d,j) { yAxisIndex = d.axis; pathString = g.yAxis()[d.axis].line(d.data).split("L0,0L").join("M0,0M").split("L0,0").join(""); return pathString;})
+						.attr("d",function(d,j) { yAxisIndex = d.axis; pathString = g.yAxis()[d.axis].line(d.data); return pathString;})
 						.attr("class","seriesLine")
 						.attr("stroke",function(d,i){return d.color? d.color : colors[i]})
 
 				lineSeries.transition()
 					.duration(500)
-					.attr("d",function(d,j) { yAxisIndex = d.axis; pathString = g.yAxis()[d.axis].line(d.data).split("L0,0L").join("M0,0M").split("L0,0").join(""); return pathString;})
+					.attr("d",function(d,j) { yAxisIndex = d.axis; pathString = g.yAxis()[d.axis].line(d.data); return pathString;})
 
 				lineSeries.exit().remove()
 			
@@ -1977,8 +2024,50 @@ function Gneiss(config)
 	};
   
   this.updateMetaAndTitle = function Gneiss$updateMetaAndTitle() {
+  		/*
+			Position the source and title elements appropriately
+  		*/
+
 		var g = this;
-		g.footerElement().attr("transform","translate(0," + (g.height() - g.footerMargin()) + ")");
+		
+		var creditBBox;
+
+		//the default values for the source element
+		var sourceElementX = g.width() - g.defaultPadding().right;;
+		var sourceElementDY = 0;
+		var sourceElementTA = "end"
+
+		//the default values for the credit element
+		var creditElementX = g.defaultPadding().left;
+
+		//place the footer elements in the right place
+
+		//test if the text elements are overlapping
+		creditBBox =  g.creditElement()[0][0].getBoundingClientRect()
+
+		var isOverlapping = sourceElementX - g.sourceElement()[0][0].getBoundingClientRect().width < creditBBox.width + creditBBox.left + 15
+
+		if(isOverlapping) {
+			//if they're overlapping stack the elements and align left
+			sourceElementDY = "1.4em";
+			sourceElementX = g.defaultPadding().left;
+			sourceElementTA = "start"
+		}
+
+		//update the source element with the propper values
+		g.sourceElement()
+			.attr("x", sourceElementX)
+			.attr("dy", sourceElementDY)
+			.attr("text-anchor", sourceElementTA)
+			.text(g.source())
+			.call(Gneiss.helper.wrap, g.width()-g.defaultPadding().left-g.defaultPadding().right);
+
+		g.creditElement().text(g.credit())
+			.attr("x",creditElementX);
+
+		g.footerElement().attr("transform", "translate(0," + (g.height() - g.footerMargin() - (g.footerElement()[0][0].getBoundingClientRect().height - g.creditElement()[0][0].getBoundingClientRect().height)) + ")");
+
+
 		return this;
 	};
   
@@ -2007,30 +2096,51 @@ function Gneiss(config)
 		graph.hasColumns(seriesByType.column.length > 0);
 		graph.isBargrid(seriesByType.bargrid.length > 0);
 	};
+
+  this.updateGroundRects = function Gneiss$updateGroundRects() {
+  	    var g = this;
+ 		// Insert a background rectangle to prevent transparency
+ 		d3.select("rect#ground")
+ 			.attr("width", g.width())
+ 			.attr("height", g.height());
+
+ 		//insert a background rectagle to style the plot area
+ 		d3.select("rect#plotArea")
+ 			.attr("transform","translate("+g.padding().left+","+g.padding().top+")")
+ 			.attr("width",g.width()-g.padding().left-g.padding().right)
+ 			.attr("height",g.height()-g.padding().top-g.padding().bottom);
+
+ 		return g;
+  }
   
   this.redraw = function Gneiss$redraw() {
   		
-
+  		var g = this;
 		/*
 			Redraw the chart
 		*/
-				
+		var wasBargrid = g.isBargrid();
+
 		//group the series by their type
-		this.seriesByType(this.splitSeriesByType(this.series()));
-		this.updateGraphPropertiesBasedOnSeriesType(this, this.seriesByType());
+		g.seriesByType(g.splitSeriesByType(g.series()));
+		g.updateGraphPropertiesBasedOnSeriesType(g, g.seriesByType());
 
-		this.calculateColumnWidths()
+		if(!wasBargrid && g.isBargrid()) {
+			g.resize();
+		}
 
-		this.setPadding()
+		g.calculateColumnWidths()
+
+		g.setPadding()
 			.setYScales()
 			.setXScales()
 			.setYAxes()
 			.setXAxis()
 			.drawSeriesAndLegend()
+			.updateGroundRects()
 			.updateMetaAndTitle();
-		
 
-		return this;
+		return g;
 	};
   
   // Call build() when someone attempts to construct a new Gneiss object
